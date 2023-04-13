@@ -1,0 +1,17 @@
+[package]
+name = "api-tonic"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "helloworld-server"
+path = "src/server.rs"
+
+[dependencies]
+tonic = "0.9"
+prost = "0.11"
+tokio = { version = "1", features = ["full"] }
+rdkafka = { version = "0.27", features = ["tokio"] }
+
+[build-dependencies]
+tonic-build = "0.9"
