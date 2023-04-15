@@ -17,5 +17,8 @@ cargo +nightly run
 Sent message from `api-tonic/`
 
 ```
-grpcurl -plaintext -import-path ./proto -proto helloworld.proto -d '{"name": "Tonic"}' localhost:50051 helloworld.Greeter/SayHello
+grpcurl -plaintext \
+  -d '{"name": "Tonic"}' \
+  localhost:50051 \
+  hello.HelloApi/SayHello
 ```
