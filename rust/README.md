@@ -11,7 +11,7 @@ cargo +nightly build
 Run
 
 ```
-cargo +nightly run
+RUST_LOG=info cargo +nightly run
 ```
 
 Sent message from `api-tonic/`
