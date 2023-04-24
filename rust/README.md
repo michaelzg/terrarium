@@ -14,11 +14,11 @@ Run
 RUST_LOG=info cargo +nightly run
 ```
 
-Sent message from `api-tonic/`
+Send message to API
 
 ```
 grpcurl -plaintext \
-  -d '{"name": "Tonic"}' \
+  -d '{"name": "Bob"}' \
   localhost:50051 \
   hello.HelloApi/SayHello
 ```
