@@ -2,17 +2,7 @@
 
 * `api-tonic`: API server that publishes to kafka using `tonic`
 
-Build. `rustix` needs nightly.
-
-```
-cargo +nightly build
-```
-
-Run
-
-```
-RUST_LOG=info cargo +nightly run
-```
+See root README for build and run commands.
 
 Send message to API
 
