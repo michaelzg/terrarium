@@ -18,11 +18,19 @@ System components built Rust. And later more languages.
 
 # Run it
 
-1. start the API in `rust/` using the `README.md`
-2. start kafka within `local/`: `docker-compose -f docker-compose.kafka.yaml up`
-3. send a request to the API (see step 1 `README.md`)
-4. look for messages in kafka container:
+1. `make run` to start API server
+2. `make kafka` to start local Kafka
+3. Listen for messages inside Kafka Docker container:
 
 ```
 kafka-console-consumer --offset earliest --partition 0 --topic default-topic --bootstrap-server kafka:9092
+```
+
+4. Send a request to the API
+
+```
+grpcurl -plaintext \
+  -d '{"name": "Bob"}' \
+  localhost:50051 \
+  hello.HelloApi/SayHello
 ```
