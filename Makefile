@@ -1,6 +1,6 @@
 RUST_DIR = rust/api-tonic
 
-.PHONY: build run
+.PHONY: build run clean kafka
 
 build:
 	cargo +nightly build --manifest-path=$(RUST_DIR)/Cargo.toml
@@ -10,3 +10,6 @@ run:
 
 clean:
 	RUST_LOG=info cargo clean --manifest-path=$(RUST_DIR)/Cargo.toml
+
+kafka:
+	docker-compose -f docker-compose.kafka.yaml up

@@ -1,13 +1,10 @@
-use std::net::SocketAddr;
-use std::time::Duration;
-
 use log::{error, info};
-use rdkafka::{config::ClientConfig, producer::{FutureProducer, FutureRecord}};
-use rdkafka::util::Timeout;
-use tonic::{Request, Response, Status, transport::Server};
-
 use proto::{HelloReply, HelloRequest};
 use proto::hello_api_server::{HelloApi, HelloApiServer};
+use rdkafka::{config::ClientConfig, producer::{FutureProducer, FutureRecord}};
+use rdkafka::util::Timeout;
+use std::net::SocketAddr;
+use tonic::{Request, Response, Status, transport::Server};
 
 mod proto {
     tonic::include_proto!("hello");
@@ -18,8 +15,8 @@ mod proto {
 
 
 pub struct KafkaService {
-    kafkaProducer: FutureProducer,
-    defaultTopic: &'static str,
+    kafka_producer: FutureProducer,
+    default_topic: &'static str,
 }
 
 impl KafkaService {
@@ -31,19 +28,19 @@ impl KafkaService {
             .expect("Producer creation error");
 
         KafkaService {
-            kafkaProducer: producer,
-            defaultTopic: "default-topic",
+            kafka_producer: producer,
+            default_topic: "default-topic",
         }
     }
 
     async fn publish(&self, name: &String) -> Result<(), Status> {
         let payload = format!("Hello {}", name);
         let record =
-            FutureRecord::to(self.defaultTopic)
+            FutureRecord::to(self.default_topic)
             .key(name)
             .payload(&payload);
 
-        self.kafkaProducer.send(record, Timeout::Never)
+        self.kafka_producer.send(record, Timeout::Never)
             .await
             .map_err(|err| Status::internal(format!("Failed to send message: {:?}", err)))?;
 
