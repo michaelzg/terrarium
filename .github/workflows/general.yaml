@@ -1,0 +1,52 @@
+name: Rust
+
+on: [pull_request]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: arduino/setup-protoc@v1
+        with:
+          version: '3.x'
+      - run: cargo test --all-features
+        working-directory: api-tonic
+
+  fmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo fmt --all -- --check
+        working-directory: api-tonic
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: arduino/setup-protoc@v1
+        with:
+          version: '3.x'
+      - run: cargo clippy -- -D warnings
+        working-directory: api-tonic
+
+  coverage:
+    name: Code coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: arduino/setup-protoc@v1
+        with:
+          version: '3.x'
+      - run: cargo install cargo-llvm-cov && cargo llvm-cov
+        working-directory: api-tonic

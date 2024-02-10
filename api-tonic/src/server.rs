@@ -1,10 +1,13 @@
 use log::{error, info};
-use proto::{HelloReply, HelloRequest};
 use proto::hello_api_server::{HelloApi, HelloApiServer};
-use rdkafka::{config::ClientConfig, producer::{FutureProducer, FutureRecord}};
+use proto::{HelloReply, HelloRequest};
 use rdkafka::util::Timeout;
+use rdkafka::{
+    config::ClientConfig,
+    producer::{FutureProducer, FutureRecord},
+};
 use std::net::SocketAddr;
-use tonic::{Request, Response, Status, transport::Server};
+use tonic::{transport::Server, Request, Response, Status};
 
 mod proto {
     tonic::include_proto!("hello");
@@ -13,10 +16,15 @@ mod proto {
         tonic::include_file_descriptor_set!("hello_descriptor");
 }
 
-
 pub struct KafkaService {
     kafka_producer: FutureProducer,
     default_topic: &'static str,
+}
+
+impl Default for KafkaService {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl KafkaService {
@@ -35,12 +43,12 @@ impl KafkaService {
 
     async fn publish(&self, name: &String) -> Result<(), Status> {
         let payload = format!("Hello {}", name);
-        let record =
-            FutureRecord::to(self.default_topic)
+        let record = FutureRecord::to(self.default_topic)
             .key(name)
             .payload(&payload);
 
-        self.kafka_producer.send(record, Timeout::Never)
+        self.kafka_producer
+            .send(record, Timeout::Never)
             .await
             .map_err(|err| Status::internal(format!("Failed to send message: {:?}", err)))?;
 
@@ -55,7 +63,9 @@ pub struct MyHelloApi {
 
 impl MyHelloApi {
     fn new(kafka_service: KafkaService) -> MyHelloApi {
-        MyHelloApi { kafka: kafka_service }
+        MyHelloApi {
+            kafka: kafka_service,
+        }
     }
 }
 
@@ -74,7 +84,7 @@ impl HelloApi for MyHelloApi {
             .map_err(|err| Status::internal(format!("Failed to send message: {:?}", err)))?;
 
         let reply = proto::HelloReply {
-            message: format!("Hello {}!", name).into(),
+            message: format!("Hello {}!", name),
         };
 
         Ok(Response::new(reply))
