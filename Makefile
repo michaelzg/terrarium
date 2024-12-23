@@ -13,3 +13,6 @@ clean:
 
 kafka:
 	docker-compose -f local/docker-compose.kafka.yaml up
+
+it:
+	cargo test --manifest-path=$(RUST_DIR)/Cargo.toml --test integration_test -- --show-output

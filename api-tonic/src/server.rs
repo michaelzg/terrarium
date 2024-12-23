@@ -9,6 +9,8 @@ use rdkafka::{
 use std::net::SocketAddr;
 use tonic::{transport::Server, Request, Response, Status};
 
+const SEND_TIMEOUT_MS: u64 = 5000;
+
 mod proto {
     tonic::include_proto!("hello");
 
@@ -23,14 +25,14 @@ pub struct KafkaService {
 
 impl Default for KafkaService {
     fn default() -> Self {
-        Self::new()
+        Self::new(9092)
     }
 }
 
 impl KafkaService {
-    pub fn new() -> KafkaService {
+    pub fn new(port: i32) -> KafkaService {
         let producer: FutureProducer = ClientConfig::new()
-            .set("bootstrap.servers", "localhost:9092")
+            .set("bootstrap.servers", format!("localhost:{}", port))
             .set("message.timeout.ms", "5000")
             .create()
             .expect("Producer creation error");
@@ -41,19 +43,26 @@ impl KafkaService {
         }
     }
 
-    async fn publish(&self, name: &String) -> Result<(), Status> {
+    async fn publish(&self, name: String) -> Result<(), Status> {
         let payload = format!("Hello {}", name);
         let record = FutureRecord::to(self.default_topic)
-            .key(name)
-            .payload(&payload);
+            .key(&name)
+            .payload(&payload)
+            .timestamp(chrono::Utc::now().timestamp_millis());
 
-        self.kafka_producer
-            .send(record, Timeout::Never)
+        match self.kafka_producer
+            .send(record, Timeout::After(std::time::Duration::from_millis(SEND_TIMEOUT_MS)))
             .await
-            .map_err(|err| Status::internal(format!("Failed to send message: {:?}", err)))?;
-
-        info!("Message published for {}", name);
-        Ok(())
+        {
+            Ok(_) => {
+                info!("Message published for {}", name);
+                Ok(())
+            }
+            Err((err, _)) => {
+                error!("Failed to publish message for {}: {:?}", name, err);
+                Err(Status::internal(format!("Failed to send message: {:?}", err)))
+            }
+        }
     }
 }
 
@@ -79,7 +88,7 @@ impl HelloApi for MyHelloApi {
         let name = request.into_inner().name;
 
         self.kafka
-            .publish(&name)
+            .publish(name.clone())
             .await
             .map_err(|err| Status::internal(format!("Failed to send message: {:?}", err)))?;
 
@@ -96,7 +105,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
 
     let addr: SocketAddr = "127.0.0.1:50051".parse().unwrap();
-    let kafka: KafkaService = KafkaService::new();
+    let kafka: KafkaService = KafkaService::new(9092);
     let api: MyHelloApi = MyHelloApi::new(kafka);
 
     let reflection = tonic_reflection::server::Builder::configure()
@@ -116,4 +125,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         })?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tonic::Request;
+
+    #[tokio::test]
+    async fn test_say_hello() {
+        let kafka = KafkaService::new(9092);
+        let api = MyHelloApi::new(kafka);
+        
+        let request = Request::new(HelloRequest {
+            name: "Test User".to_string(),
+        });
+
+        let response = api.say_hello(request).await.unwrap();
+        assert_eq!(
+            response.into_inner().message,
+            "Hello Test User!"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_kafka_publish() {
+        let kafka = KafkaService::new(9092);
+        let result = kafka.publish("Test User".to_string()).await;
+        assert!(result.is_ok());
+    }
 }

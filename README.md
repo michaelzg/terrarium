@@ -18,8 +18,8 @@ System components built Rust. And later more languages.
 
 # Run it
 
-1. `make run` to start API server
-2. `make kafka` to start local Kafka
+1. `make kafka` to start local Kafka
+2. `make run` to start API server or `make test` to run integration test with the local kafka
 3. Listen for messages inside Kafka Docker container:
 
 ```
