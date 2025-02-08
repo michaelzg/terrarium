@@ -8,31 +8,7 @@ The project currently implements a gRPC API server that publishes messages to Ka
 
 ## Immediate Development Goals
 
-### 1. Kafka Consumer Implementation (High Priority)
-The consumer module will be developed at the same level as api-tonic to process messages from Kafka.
-
-#### Technical Details
-- Create new Rust binary in `consumer/` directory
-- Dependencies:
-  - rdkafka for Kafka consumer implementation
-  - serde for message serialization/deserialization
-  - tokio for async runtime
-- Features:
-  - Subscribe to "default-topic"
-  - Process messages in real-time
-  - Implement error handling and retry mechanisms
-  - Configurable consumer group settings
-  - Metrics collection for monitoring
-
-#### Implementation Steps
-1. Set up Cargo.toml with required dependencies
-2. Implement consumer configuration
-3. Create message processing pipeline
-4. Add logging and monitoring
-5. Implement graceful shutdown
-6. Add unit and integration tests
-
-### 2. Load Testing Client (Medium Priority)
+### 1. Load Testing Client (Medium Priority)
 Develop a load testing client to validate system performance and reliability.
 
 #### Technical Details
@@ -51,7 +27,7 @@ Develop a load testing client to validate system performance and reliability.
 4. Create reporting mechanism
 5. Add documentation
 
-### 3. Infrastructure Automation (Medium Priority)
+### 2. Infrastructure Automation (Medium Priority)
 Implement Terraform configurations for deployment and management.
 
 #### Technical Details
