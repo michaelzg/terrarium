@@ -2,3 +2,4 @@
 .idea/
 .DS_Store
 common_proto/target/*
+consumer/target/*

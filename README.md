@@ -11,7 +11,7 @@ System components built Rust. And later more languages.
 
 * gRPC API server
 * Kafka
-* Kafka consumer (TODO)
+* Kafka consumer
 * load test client (TODO)
 * terraform for running & deploying (TODO)
 * .. and more
@@ -20,13 +20,20 @@ System components built Rust. And later more languages.
 
 1. `make run` to start API server
 2. `make kafka` to start local Kafka
-3. Listen for messages inside Kafka Docker container:
+3. `make consumer` to start the Kafka consumer
+   The consumer reads its configuration from `consumer/config.json` which specifies:
+   - Kafka broker address
+   - Consumer group ID
+   - Topic to consume from
 
-```
-kafka-console-consumer --offset earliest --partition 0 --topic default-topic --bootstrap-server kafka:9092
-```
+   The consumer will automatically handle graceful shutdown on Ctrl+C.
 
-4. Send a request to the API
+4. Optionally, you can also listen for messages directly inside the Kafka Docker container:
+   ```
+   kafka-console-consumer --offset earliest --partition 0 --topic default-topic --bootstrap-server kafka:9092
+   ```
+
+5. Send a request to the API
 
 ```
 grpcurl -plaintext \
