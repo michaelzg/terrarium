@@ -1,6 +1,6 @@
 RUST_DIR = api-tonic
 
-.PHONY: build run clean kafka
+.PHONY: build run clean kafka consumer
 
 build:
 	cargo build --manifest-path=$(RUST_DIR)/Cargo.toml
@@ -13,3 +13,6 @@ clean:
 
 kafka:
 	docker-compose -f local/docker-compose.kafka.yaml up
+
+consumer:
+	cd consumer && RUST_LOG=info CONSUMER_CONFIG="$$(cat config.json)" cargo run
