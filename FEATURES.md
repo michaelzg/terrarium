@@ -2,90 +2,19 @@
 
 ## Current State
 The project currently implements a gRPC API server that publishes messages to Kafka:
-- gRPC endpoint `/hello.HelloApi/SayHello` accepting name parameter
+- gRPC endpoint `/hello.HelloApi/SayHello` accepting name parameter hosted by api-tonic.
 - Messages published to "default-topic" in Kafka
-- Local Kafka setup via docker-compose
+- Consumer reads from the "default-topic" in Kafka and writes to PostgreSQL database.
+- Local Kafka and PostgeSQL setup via docker-compose
 
 ## Immediate Development Goals
 
-### 1. Load Testing Client (Medium Priority)
-Develop a load testing client to validate system performance and reliability.
+### Step 1. API to read from the written mesages in PostgreSQL
 
-#### Technical Details
-- Create new binary for load testing
-- Use async runtime for concurrent request generation
-- Features:
-  - Configurable request rates
-  - Various test scenarios (burst, sustained load)
-  - Performance metrics collection
-  - Test result reporting
+### Step 2. UI to display and write the written mesages in api-tonic
 
-#### Implementation Steps
-1. Create load test client structure
-2. Implement test scenarios
-3. Add metrics collection
-4. Create reporting mechanism
-5. Add documentation
+### Step 3. Simulator to make write requests to the API. Simulation should have a validation mode to read requests to ensure the data written is there.
 
-### 2. Infrastructure Automation (Medium Priority)
-Implement Terraform configurations for deployment and management.
+### Step 4. Grafana monitoring dashboard with Influx and prometheus setup to monitor application health. 
 
-#### Technical Details
-- Create Terraform modules for:
-  - Kafka cluster setup
-  - API server deployment
-  - Consumer deployment
-  - Monitoring infrastructure
-- Features:
-  - Environment-specific configurations
-  - Scalability settings
-  - Security group management
-  - Monitoring and alerting setup
 
-#### Implementation Steps
-1. Create base infrastructure modules
-2. Implement environment-specific configurations
-3. Add monitoring and logging infrastructure
-4. Create deployment pipelines
-5. Document deployment procedures
-
-## Future Enhancements
-
-### 1. Additional Language Support
-- Implement clients in different languages
-- Create language-specific SDKs
-- Add example implementations
-
-### 2. Enhanced Message Processing
-- Add message transformation capabilities
-- Implement message routing logic
-- Add support for different message formats
-
-### 3. Monitoring and Observability
-- Add distributed tracing
-- Implement detailed metrics collection
-- Create monitoring dashboards
-- Set up alerting
-
-### 4. Security Enhancements
-- Implement authentication
-- Add authorization mechanisms
-- Add message encryption
-- Implement audit logging
-
-## Development Guidelines
-1. All new features should include:
-   - Unit tests
-   - Integration tests
-   - Documentation
-   - Monitoring metrics
-2. Follow existing code style and patterns
-3. Maintain backward compatibility
-4. Consider scalability in design decisions
-
-## Success Metrics
-- Message processing latency < 100ms
-- System handles 1000+ messages/second
-- 99.9% uptime
-- Zero message loss
-- Test coverage > 80%
