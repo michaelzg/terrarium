@@ -1,11 +1,13 @@
 use log::info;
 use serde::Deserialize;
+use crate::db::DatabaseSettings;
 
 #[derive(Debug, Deserialize)]
 pub struct ConsumerConfig {
     pub kafka_broker: String,
     pub group_id: String,
     pub topic: String,
+    pub database: DatabaseSettings,
 }
 
 impl ConsumerConfig {

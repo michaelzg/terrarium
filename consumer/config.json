@@ -1,5 +1,13 @@
 {
     "kafka_broker": "localhost:9092",
     "group_id": "test-consumer-group",
-    "topic": "default-topic"
+    "topic": "default-topic",
+    "database": {
+        "host": "localhost",
+        "port": 5432,
+        "user": "app_user",
+        "password": "secret",
+        "dbname": "postgres",
+        "pool_size": 10
+    }
 }
