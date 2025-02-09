@@ -11,8 +11,8 @@ run:
 clean:
 	RUST_LOG=info cargo clean --manifest-path=$(RUST_DIR)/Cargo.toml
 
-kafka:
-	docker-compose -f local/docker-compose.kafka.yaml up
+deps:
+	docker-compose -f local/docker-compose.yaml up
 
 consumer:
 	cd consumer && RUST_LOG=info CONSUMER_CONFIG="$$(cat config.json)" cargo run
