@@ -33,11 +33,20 @@ System components built Rust. And later more languages.
    kafka-console-consumer --offset earliest --partition 0 --topic default-topic --bootstrap-server kafka:9092
    ```
 
-5. Send a request to the API
+5. Send a request to the API to say hello and write a message.
 
 ```
 grpcurl -plaintext \
   -d '{"name": "Bob"}' \
   localhost:50051 \
   hello.HelloApi/SayHello
+```
+
+6. Send a request to read past messages.
+
+```
+grpcurl -plaintext \
+  -d '{"topic": "default-topic", "limit": 10}' \
+  localhost:50051 \
+  hello.HelloApi/GetMessages
 ```

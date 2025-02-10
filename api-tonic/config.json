@@ -1,0 +1,12 @@
+{
+    "kafka_broker": "localhost:9092",
+    "topic": "default-topic",
+    "database": {
+        "host": "localhost",
+        "port": 5432,
+        "user": "app_user",
+        "password": "secret",
+        "dbname": "postgres",
+        "pool_size": 10
+    }
+}
