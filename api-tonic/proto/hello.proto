@@ -3,6 +3,7 @@ package hello;
 
 service HelloApi {
     rpc SayHello (HelloRequest) returns (HelloReply);
+    rpc GetMessages (GetMessagesRequest) returns (GetMessagesReply);
 }
 
 message HelloRequest {
@@ -11,4 +12,22 @@ message HelloRequest {
 
 message HelloReply {
     string message = 1;
+}
+
+message GetMessagesRequest {
+    string topic = 1;
+    int32 limit = 2;
+}
+
+message GetMessagesReply {
+    repeated Message messages = 1;
+}
+
+message Message {
+    int32 id = 1;
+    string topic = 2;
+    int32 part = 3;
+    int64 kafkaoffset = 4;
+    string payload = 5;
+    string created_at = 6;
 }
