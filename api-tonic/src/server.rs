@@ -1,13 +1,13 @@
 use log::{error, info};
 use proto::hello_api_server::{HelloApi, HelloApiServer};
-use proto::{HelloReply, HelloRequest, GetMessagesRequest, GetMessagesReply};
-use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
-use std::fs;
-use serde::Deserialize;
+use proto::{GetMessagesReply, GetMessagesRequest, HelloReply, HelloRequest};
 use rdkafka::{
     config::ClientConfig,
     producer::{FutureProducer, FutureRecord},
 };
+use serde::Deserialize;
+use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use std::fs;
 use tonic::{transport::Server, Request, Response, Status};
 
 #[derive(Debug, Deserialize)]
@@ -73,9 +73,7 @@ impl KafkaService {
 
     async fn publish(&self, name: &String) -> Result<(), Status> {
         let payload = format!("Hello {}", name);
-        let record = FutureRecord::to(&self.topic)
-            .key(name)
-            .payload(&payload);
+        let record = FutureRecord::to(&self.topic).key(name).payload(&payload);
 
         self.kafka_producer
             .send(record, std::time::Duration::from_secs(5))
@@ -116,27 +114,34 @@ impl MyHelloApi {
         })
     }
 
-    async fn get_messages_from_db(&self, topic: &str, limit: i32) -> Result<Vec<proto::Message>, sqlx::Error> {
+    async fn get_messages_from_db(
+        &self,
+        topic: &str,
+        limit: i32,
+    ) -> Result<Vec<proto::Message>, sqlx::Error> {
         let messages = sqlx::query_as::<_, DbMessage>(
             "SELECT id, topic, part, kafkaoffset, payload, created_at::text as created_at 
              FROM messages 
              WHERE topic = $1 
              ORDER BY created_at DESC 
-             LIMIT $2"
+             LIMIT $2",
         )
         .bind(topic)
         .bind(limit as i64)
         .fetch_all(&self.db_pool)
         .await?;
 
-        Ok(messages.into_iter().map(|m| proto::Message {
-            id: m.id,
-            topic: m.topic,
-            part: m.part,
-            kafkaoffset: m.kafkaoffset,
-            payload: m.payload,
-            created_at: m.created_at,
-        }).collect())
+        Ok(messages
+            .into_iter()
+            .map(|m| proto::Message {
+                id: m.id,
+                topic: m.topic,
+                part: m.part,
+                kafkaoffset: m.kafkaoffset,
+                payload: m.payload,
+                created_at: m.created_at,
+            })
+            .collect())
     }
 }
 
@@ -147,7 +152,8 @@ impl HelloApi for MyHelloApi {
         request: Request<GetMessagesRequest>,
     ) -> Result<Response<GetMessagesReply>, Status> {
         let req = request.into_inner();
-        let messages = self.get_messages_from_db(&req.topic, req.limit)
+        let messages = self
+            .get_messages_from_db(&req.topic, req.limit)
             .await
             .map_err(|e| Status::internal(format!("Database error: {}", e)))?;
 
