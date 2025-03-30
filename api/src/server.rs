@@ -184,7 +184,7 @@ impl HelloApi for MyHelloApi {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
 
-    let config = ServerConfig::load("api-tonic/config.json")?;
+    let config = ServerConfig::load("api/config.json")?;
     let addr = "127.0.0.1:50051".parse()?;
     let api = MyHelloApi::new(&config)
         .await
