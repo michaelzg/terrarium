@@ -194,6 +194,7 @@ dependencies = [
 name = "consumer"
 version = "0.1.0"
 dependencies = [
+ "bytes",
  "common_proto",
  "ctrlc",
  "deadpool-postgres",
@@ -201,6 +202,7 @@ dependencies = [
  "futures",
  "hyper",
  "log",
+ "prost",
  "rdkafka",
  "serde",
  "serde_json",

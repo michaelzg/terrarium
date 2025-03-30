@@ -85,3 +85,43 @@ pub async fn insert_message(
     );
     Ok(())
 }
+
+/// Insert published data into the published_data table
+pub async fn insert_published_data(
+    pool: &Pool,
+    topic: &str,
+    partition: i32,
+    offset: i64,
+    data: &str,
+    metadata: Option<&str>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    log::debug!(
+        "Attempting to insert published data - Topic: {}, Partition: {}, Offset: {}",
+        topic,
+        partition,
+        offset
+    );
+
+    let mut client = pool.get().await?;
+    let tx = client.transaction().await?;
+
+    // Execute the insert query.
+    let rows = tx
+        .execute(
+            "INSERT INTO published_data (topic, part, kafkaoffset, data, metadata) VALUES ($1, $2, $3, $4, $5)",
+            &[&topic, &partition, &offset, &data, &metadata],
+        )
+        .await
+        .map_err(|e| {
+            log::error!("Failed to insert published data into database: {}", e);
+            e
+        })?;
+
+    // Commit the transaction. (If an error occurs here, the transaction will roll back automatically.)
+    tx.commit().await?;
+    log::debug!(
+        "Successfully inserted {} row(s) into published_data table",
+        rows
+    );
+    Ok(())
+}

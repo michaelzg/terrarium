@@ -7,6 +7,7 @@ pub struct ConsumerConfig {
     pub kafka_broker: String,
     pub group_id: String,
     pub topic: String,
+    pub publish_topic: String,
     pub database: DatabaseSettings,
 }
 

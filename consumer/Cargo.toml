@@ -16,3 +16,5 @@ env_logger = "0.10"
 tokio-postgres = { version = "0.7", features = ["with-uuid-1"] }
 deadpool-postgres = "0.12"
 common_proto = { path = "../common_proto" }
+prost = "0.11"
+bytes = "1.4"
