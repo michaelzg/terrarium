@@ -1,6 +1,6 @@
-use log::{error, info};
 use common_proto::proto::hello_api_server::{HelloApi, HelloApiServer};
 use common_proto::proto::{GetMessagesReply, GetMessagesRequest, HelloReply, HelloRequest};
+use log::{error, info};
 use rdkafka::{
     config::ClientConfig,
     producer::{FutureProducer, FutureRecord},
