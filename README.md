@@ -3,11 +3,11 @@ Data processing ecosystem for experiments.
 
 ```mermaid
 flowchart TD
-    A[client] -->|gRPC| B[api-tonic]
+    A[client] -->|gRPC| B[api]
     B --> C[Local Kafka]
 ```
 
-System components built Rust. And later more languages.
+System components built Rust.
 
 * gRPC API server
 * Kafka

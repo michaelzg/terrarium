@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 defaults:
   run:
-    working-directory: api-tonic
+    working-directory: api
 
 env:
   CARGO_TERM_COLOR: always

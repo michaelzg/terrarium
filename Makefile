@@ -1,4 +1,4 @@
-RUST_DIR = api-tonic
+RUST_DIR = api
 
 .PHONY: build run clean kafka consumer
 
