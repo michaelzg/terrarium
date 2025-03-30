@@ -1,6 +1,6 @@
 use log::{error, info};
-use proto::hello_api_server::{HelloApi, HelloApiServer};
-use proto::{GetMessagesReply, GetMessagesRequest, HelloReply, HelloRequest};
+use common_proto::proto::hello_api_server::{HelloApi, HelloApiServer};
+use common_proto::proto::{GetMessagesReply, GetMessagesRequest, HelloReply, HelloRequest};
 use rdkafka::{
     config::ClientConfig,
     producer::{FutureProducer, FutureRecord},
@@ -45,12 +45,8 @@ impl DatabaseSettings {
     }
 }
 
-mod proto {
-    tonic::include_proto!("hello");
-
-    pub(crate) const FILE_DESCRIPTOR_SET: &[u8] =
-        tonic::include_file_descriptor_set!("hello_descriptor");
-}
+// Use proto module from common_proto crate
+use common_proto::proto;
 
 pub struct KafkaService {
     kafka_producer: FutureProducer,
