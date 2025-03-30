@@ -1,0 +1,14 @@
+syntax = "proto3";
+package envelope;
+
+// Envelope message that wraps any serialized protobuf message
+message Envelope {
+    // The serialized protobuf message (in this case, a serialized PublishRequest)
+    bytes payload = 1;
+    
+    // Metadata about the message
+    string message_type = 2;  // The type of the message (e.g., "hello.PublishRequest")
+    string timestamp = 3;     // When the message was created
+    string version = 4;       // Protocol version for future compatibility
+    map<string, string> headers = 5;  // Additional headers/metadata
+}

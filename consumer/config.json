@@ -2,6 +2,7 @@
     "kafka_broker": "localhost:9092",
     "group_id": "test-consumer-group",
     "topic": "default-topic",
+    "publish_topic": "publish-topic",
     "database": {
         "host": "localhost",
         "port": 5432,

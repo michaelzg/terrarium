@@ -1,6 +1,7 @@
 {
     "kafka_broker": "localhost:9092",
     "topic": "default-topic",
+    "publish_topic": "publish-topic",
     "database": {
         "host": "localhost",
         "port": 5432,
