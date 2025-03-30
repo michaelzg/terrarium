@@ -10,6 +10,7 @@ path = "src/server.rs"
 [dependencies]
 tonic = "0.9"
 tonic-reflection = "0.9.1"
+tonic-web = "0.9"
 prost = "0.11"
 tokio = { version = "1", features = ["full"] }
 rdkafka = { version = "0.29", features = ["cmake-build"] }
@@ -18,6 +19,11 @@ log = "0.4.17"
 sqlx = { version = "0.8", features = ["postgres", "runtime-tokio-native-tls"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+axum = "0.7"
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors"] }
+hyper = { version = "1.0", features = ["full"] }
+http = "1.0"
 
 [build-dependencies]
-tonic-build = "0.9"
+tonic-build = { version = "0.9", features = ["prost"] }

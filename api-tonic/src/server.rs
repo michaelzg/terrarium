@@ -15,6 +15,7 @@ pub struct ServerConfig {
     kafka_broker: String,
     topic: String,
     database: DatabaseSettings,
+    grpc: GrpcSettings,
 }
 
 #[derive(Debug, Deserialize)]
@@ -25,6 +26,12 @@ struct DatabaseSettings {
     password: String,
     dbname: String,
     pool_size: usize,
+}
+
+#[derive(Debug, Deserialize)]
+struct GrpcSettings {
+    host: String,
+    port: u16,
 }
 
 impl ServerConfig {
@@ -184,8 +191,8 @@ impl HelloApi for MyHelloApi {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
 
-    let config = ServerConfig::load("api-tonic/config.json")?;
-    let addr = "127.0.0.1:50051".parse()?;
+    let config = ServerConfig::load("config.json")?;
+    let addr = format!("{}:{}", config.grpc.host, config.grpc.port).parse()?;
     let api = MyHelloApi::new(&config)
         .await
         .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
@@ -197,8 +204,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Server is online at {}", addr);
 
     Server::builder()
-        .add_service(reflection)
-        .add_service(HelloApiServer::new(api))
+        .accept_http1(true)
+        .add_service(tonic_web::enable(reflection))
+        .add_service(tonic_web::enable(HelloApiServer::new(api)))
         .serve(addr)
         .await
         .map_err(|e| {
