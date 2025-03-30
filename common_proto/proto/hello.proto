@@ -4,6 +4,8 @@ package hello;
 service HelloApi {
     rpc SayHello (HelloRequest) returns (HelloReply);
     rpc GetMessages (GetMessagesRequest) returns (GetMessagesReply);
+    rpc Publish (PublishRequest) returns (PublishReply);
+    rpc GetPublishes (GetPublishesRequest) returns (GetPublishesReply);
 }
 
 message HelloRequest {
@@ -30,4 +32,30 @@ message Message {
     int64 kafkaoffset = 4;
     string payload = 5;
     string created_at = 6;
+}
+
+message PublishRequest {
+    string data = 1;
+    string metadata = 2;  // Optional metadata about the published data
+}
+
+message PublishReply {
+    bool success = 1;
+    string message = 2;  // Error message if success is false
+}
+
+message GetPublishesRequest {
+    int32 limit = 1;
+    string filter = 2;  // Optional filter for published data
+}
+
+message GetPublishesReply {
+    repeated PublishedData publishes = 1;
+}
+
+message PublishedData {
+    int32 id = 1;
+    string data = 2;
+    string metadata = 3;
+    string created_at = 4;
 }

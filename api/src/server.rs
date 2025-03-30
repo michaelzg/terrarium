@@ -1,5 +1,10 @@
 use common_proto::proto::hello_api_server::{HelloApi, HelloApiServer};
-use common_proto::proto::{GetMessagesReply, GetMessagesRequest, HelloReply, HelloRequest};
+use common_proto::proto::{
+    GetMessagesReply, GetMessagesRequest, HelloReply, HelloRequest, PublishReply, PublishRequest,
+    GetPublishesReply, GetPublishesRequest, PublishedData,
+};
+use common_proto::envelope::Envelope;
+use prost::Message as ProstMessage;
 use log::{error, info};
 use rdkafka::{
     config::ClientConfig,
@@ -14,6 +19,7 @@ use tonic::{transport::Server, Request, Response, Status};
 pub struct ServerConfig {
     kafka_broker: String,
     topic: String,
+    publish_topic: String,
     database: DatabaseSettings,
 }
 
@@ -51,6 +57,7 @@ use common_proto::proto;
 pub struct KafkaService {
     kafka_producer: FutureProducer,
     topic: String,
+    publish_topic: String,
 }
 
 impl KafkaService {
@@ -64,6 +71,7 @@ impl KafkaService {
         KafkaService {
             kafka_producer: producer,
             topic: config.topic.clone(),
+            publish_topic: config.publish_topic.clone(),
         }
     }
 
@@ -79,6 +87,39 @@ impl KafkaService {
         info!("Message published for {}", name);
         Ok(())
     }
+
+    async fn publish_data(&self, request: &PublishRequest) -> Result<(), Status> {
+        // Serialize the PublishRequest to bytes
+        let request_bytes = request.encode_to_vec();
+        
+        // Create an envelope to wrap the serialized request
+        let envelope = Envelope {
+            payload: request_bytes,
+            message_type: "hello.PublishRequest".to_string(),
+            timestamp: chrono::Utc::now().to_rfc3339(),
+            version: "1.0".to_string(),
+            headers: std::collections::HashMap::new(),
+        };
+        
+        // Serialize the envelope to bytes
+        let envelope_bytes = envelope.encode_to_vec();
+        
+        // Create a key for the message (using a random UUID for uniqueness)
+        let key = uuid::Uuid::new_v4().to_string();
+        
+        // Create and send the Kafka record
+        let record = FutureRecord::to(&self.publish_topic)
+            .key(&key)
+            .payload(&envelope_bytes);
+
+        self.kafka_producer
+            .send(record, std::time::Duration::from_secs(5))
+            .await
+            .map_err(|err| Status::internal(format!("Failed to send publish message: {:?}", err)))?;
+
+        info!("Data published with key {}", key);
+        Ok(())
+    }
 }
 
 #[derive(sqlx::FromRow)]
@@ -88,6 +129,17 @@ struct DbMessage {
     part: i32,
     kafkaoffset: i64,
     payload: String,
+    created_at: String,
+}
+
+#[derive(sqlx::FromRow)]
+struct DbPublishedData {
+    id: i32,
+    topic: String,
+    part: i32,
+    kafkaoffset: i64,
+    data: String,
+    metadata: Option<String>,
     created_at: String,
 }
 
@@ -139,6 +191,47 @@ impl MyHelloApi {
             })
             .collect())
     }
+    
+    async fn get_publishes_from_db(
+        &self,
+        limit: i32,
+        filter: Option<&str>,
+    ) -> Result<Vec<proto::PublishedData>, sqlx::Error> {
+        let query = match filter {
+            Some(filter_text) => {
+                sqlx::query_as::<_, DbPublishedData>(
+                    "SELECT id, topic, part, kafkaoffset, data, metadata, created_at::text as created_at 
+                     FROM published_data 
+                     WHERE data LIKE $1 OR metadata LIKE $1
+                     ORDER BY created_at DESC 
+                     LIMIT $2",
+                )
+                .bind(format!("%{}%", filter_text))
+                .bind(limit as i64)
+            },
+            None => {
+                sqlx::query_as::<_, DbPublishedData>(
+                    "SELECT id, topic, part, kafkaoffset, data, metadata, created_at::text as created_at 
+                     FROM published_data 
+                     ORDER BY created_at DESC 
+                     LIMIT $1",
+                )
+                .bind(limit as i64)
+            }
+        };
+        
+        let published_data = query.fetch_all(&self.db_pool).await?;
+
+        Ok(published_data
+            .into_iter()
+            .map(|p| proto::PublishedData {
+                id: p.id,
+                data: p.data,
+                metadata: p.metadata.unwrap_or_default(),
+                created_at: p.created_at,
+            })
+            .collect())
+    }
 }
 
 #[tonic::async_trait]
@@ -173,6 +266,56 @@ impl HelloApi for MyHelloApi {
         };
 
         Ok(Response::new(reply))
+    }
+    
+    async fn publish(
+        &self,
+        request: Request<PublishRequest>,
+    ) -> Result<Response<PublishReply>, Status> {
+        info!("Received a publish request");
+        let publish_request = request.into_inner();
+        
+        // Validate the request
+        if publish_request.data.is_empty() {
+            return Ok(Response::new(PublishReply {
+                success: false,
+                message: "Data field cannot be empty".to_string(),
+            }));
+        }
+        
+        // Publish the data to Kafka
+        match self.kafka.publish_data(&publish_request).await {
+            Ok(_) => {
+                info!("Successfully published data");
+                Ok(Response::new(PublishReply {
+                    success: true,
+                    message: "Data published successfully".to_string(),
+                }))
+            },
+            Err(e) => {
+                error!("Failed to publish data: {}", e);
+                Ok(Response::new(PublishReply {
+                    success: false,
+                    message: format!("Failed to publish data: {}", e),
+                }))
+            }
+        }
+    }
+    
+    async fn get_publishes(
+        &self,
+        request: Request<GetPublishesRequest>,
+    ) -> Result<Response<GetPublishesReply>, Status> {
+        let req = request.into_inner();
+        let filter = if req.filter.is_empty() { None } else { Some(req.filter.as_str()) };
+        let limit = if req.limit <= 0 { 100 } else { req.limit }; // Default to 100 if not specified
+        
+        let publishes = self
+            .get_publishes_from_db(limit, filter)
+            .await
+            .map_err(|e| Status::internal(format!("Database error: {}", e)))?;
+
+        Ok(Response::new(GetPublishesReply { publishes }))
     }
 }
 
