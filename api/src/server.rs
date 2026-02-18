@@ -1,6 +1,10 @@
+use chrono::{DateTime, Utc};
 use common_proto::proto::hello_api_server::{HelloApi, HelloApiServer};
 use common_proto::proto::{GetMessagesReply, GetMessagesRequest, HelloReply, HelloRequest};
+use hyper::service::{make_service_fn, service_fn};
+use hyper::{Body, Request as HttpRequest, Response as HttpResponse, Server as HttpServer};
 use log::{error, info};
+use prometheus::{Encoder, IntCounter, Opts, Registry, TextEncoder};
 use rdkafka::{
     config::ClientConfig,
     producer::{FutureProducer, FutureRecord},
@@ -8,11 +12,6 @@ use rdkafka::{
 use serde::{Deserialize, Serialize};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use std::fs;
-use chrono::{DateTime, Utc};
-use hyper::{Body, Request as HttpRequest, Response as HttpResponse, Server as HttpServer};
-use hyper::service::{make_service_fn, service_fn};
-use prometheus::{Encoder, IntCounter, Histogram, HistogramOpts, Opts, Registry, TextEncoder};
-use std::sync::Arc;
 use tonic::{transport::Server, Request, Response, Status};
 
 #[derive(Debug, Deserialize)]
@@ -95,9 +94,8 @@ impl KafkaService {
             name: name.clone(),
             produced_at: Utc::now(),
         };
-        let payload = serde_json::to_string(&event).map_err(|e| {
-            Status::internal(format!("Failed to serialize event payload: {}", e))
-        })?;
+        let payload = serde_json::to_string(&event)
+            .map_err(|e| Status::internal(format!("Failed to serialize event payload: {}", e)))?;
 
         let record = FutureRecord::to(&self.topic).key(name).payload(&payload);
 
