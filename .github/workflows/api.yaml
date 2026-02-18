@@ -15,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Install native deps
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
       - uses: dtolnay/rust-toolchain@stable
       - uses: arduino/setup-protoc@v1
         with:
@@ -34,6 +36,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Install native deps
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
       - uses: dtolnay/rust-toolchain@stable
       - uses: arduino/setup-protoc@v1
         with:
@@ -45,6 +49,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Install native deps
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
       - uses: dtolnay/rust-toolchain@stable
       - uses: arduino/setup-protoc@v1
         with:
