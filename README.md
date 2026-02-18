@@ -50,3 +50,15 @@ grpcurl -plaintext \
   localhost:50051 \
   hello.HelloApi/GetMessages
 ```
+
+# Observability
+
+The API and consumer both expose Prometheus metrics and a simple HTML dashboard.
+
+* API metrics: http://localhost:9000/metrics
+* API dashboard: http://localhost:9000/dashboard
+
+* Consumer metrics: http://localhost:9100/metrics
+* Consumer dashboard: http://localhost:9100/dashboard
+
+Each dashboard links to the corresponding `/metrics` and `/healthz` endpoints.
