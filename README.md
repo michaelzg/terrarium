@@ -5,6 +5,8 @@ Data processing ecosystem for experiments.
 flowchart TD
     A[client] -->|gRPC| B[api]
     B --> C[Local Kafka]
+    C --> D[consumer]
+    D --> E[Postgres]
 ```
 
 System components built Rust.
@@ -12,41 +14,73 @@ System components built Rust.
 * gRPC API server
 * Kafka
 * Kafka consumer
+* Postgres database
+* Prometheus metrics endpoints (API + consumer)
+* Grafana dashboard (local)
 * load test client (TODO)
 * terraform for running & deploying (TODO)
 * .. and more
 
-# Run it
+## Run it
 
-1. `make run` to start API server
-2. `make kafka` to start local Kafka
-3. `make consumer` to start the Kafka consumer
-   The consumer reads its configuration from `consumer/config.json` which specifies:
-   - Kafka broker address
-   - Consumer group ID
-   - Topic to consume from
+1. Start infra (Kafka, Postgres, Prometheus, Grafana):
 
-   The consumer will automatically handle graceful shutdown on Ctrl+C.
-
-4. Optionally, you can also listen for messages directly inside the Kafka Docker container:
-   ```
-   kafka-console-consumer --offset earliest --partition 0 --topic default-topic --bootstrap-server kafka:9092
-   ```
-
-5. Send a request to the API to say hello and write a message.
-
+```bash
+cd local
+docker compose up -d
+cd ..
 ```
+
+2. Start the consumer:
+
+```bash
+cd consumer
+cargo run
+```
+
+3. Start the API server:
+
+```bash
+cd ../api
+cargo run --bin helloworld-server
+```
+
+4. Send a request to the API to say hello and write a message.
+
+```bash
 grpcurl -plaintext \
   -d '{"name": "Bob"}' \
   localhost:50051 \
   hello.HelloApi/SayHello
 ```
 
-6. Send a request to read past messages.
+5. Send a request to read past messages.
 
-```
+```bash
 grpcurl -plaintext \
   -d '{"topic": "default-topic", "limit": 10}' \
   localhost:50051 \
   hello.HelloApi/GetMessages
 ```
+
+## Monitoring & dashboards
+
+With the API and consumer running:
+
+- **Prometheus** (scrapes metrics from the host):
+  - UI: http://localhost:9090
+
+- **Grafana** (default admin/admin):
+  - UI: http://localhost:3000
+  - Add a Prometheus data source pointing to `http://prometheus:9090`.
+  - Build dashboards using:
+    - `api_messages_published_total`
+    - `consumer_messages_total`
+    - `consumer_db_insert_failures_total`
+    - `consumer_end_to_end_latency_seconds`
+
+- **API metrics:** http://localhost:9000/metrics
+- **API dashboard:** http://localhost:9000/dashboard
+
+- **Consumer metrics:** http://localhost:9100/metrics
+- **Consumer dashboard:** http://localhost:9100/dashboard
