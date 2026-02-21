@@ -7,16 +7,16 @@ use std::{
     time::Duration,
 };
 
+use chrono::{DateTime, Utc};
 use futures::stream::StreamExt;
+use hyper::service::{make_service_fn, service_fn};
+use hyper::{Body, Request as HttpRequest, Response as HttpResponse, Server as HttpServer};
+use prometheus::{Encoder, Histogram, HistogramOpts, IntCounter, Opts, Registry, TextEncoder};
 use rdkafka::config::ClientConfig;
 use rdkafka::consumer::{Consumer, StreamConsumer};
 use rdkafka::Message;
 use serde::Deserialize;
 use tokio::time::sleep;
-use chrono::{DateTime, Utc};
-use hyper::{Body, Request as HttpRequest, Response as HttpResponse, Server as HttpServer};
-use hyper::service::{make_service_fn, service_fn};
-use prometheus::{Encoder, Histogram, HistogramOpts, IntCounter, Opts, Registry, TextEncoder};
 
 mod config;
 mod db;
@@ -178,14 +178,18 @@ async fn process_message(
         }
     }
     if !inserted {
-        log::error!("Failed to store message in database after {} attempts", MAX_RETRIES);
+        log::error!(
+            "Failed to store message in database after {} attempts",
+            MAX_RETRIES
+        );
         db_insert_failures.inc();
         return;
     }
 
     if let Ok(parsed) = serde_json::from_str::<HelloMessage>(&payload_str) {
         let now = Utc::now();
-        let latency = (now - parsed.produced_at).num_microseconds().unwrap_or(0) as f64 / 1_000_000.0;
+        let latency =
+            (now - parsed.produced_at).num_microseconds().unwrap_or(0) as f64 / 1_000_000.0;
         if latency >= 0.0 {
             end_to_end_latency.observe(latency);
         }
@@ -256,7 +260,9 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let resp = handle_http(req, Registry::new(), running_flag()).await.unwrap();
+        let resp = handle_http(req, Registry::new(), running_flag())
+            .await
+            .unwrap();
         assert_eq!(resp.status(), 200);
         let bytes = to_bytes(resp.into_body()).await.unwrap();
         assert_eq!(&bytes[..], b"ok");
@@ -270,7 +276,9 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let resp = handle_http(req, Registry::new(), running_flag()).await.unwrap();
+        let resp = handle_http(req, Registry::new(), running_flag())
+            .await
+            .unwrap();
         assert_eq!(resp.status(), 200);
         assert!(resp.headers().get("Content-Type").is_some());
     }
@@ -283,7 +291,9 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let resp = handle_http(req, Registry::new(), running_flag()).await.unwrap();
+        let resp = handle_http(req, Registry::new(), running_flag())
+            .await
+            .unwrap();
         assert_eq!(resp.status(), 404);
     }
 }

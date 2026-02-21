@@ -1,6 +1,6 @@
+use crate::db::DatabaseSettings;
 use log::info;
 use serde::Deserialize;
-use crate::db::DatabaseSettings;
 
 #[derive(Debug, Deserialize)]
 pub struct ConsumerConfig {
