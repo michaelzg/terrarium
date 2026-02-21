@@ -296,3 +296,64 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use hyper::{body::to_bytes, Method};
+
+    #[test]
+    fn builds_postgres_connection_string() {
+        let db = DatabaseSettings {
+            host: "localhost".to_string(),
+            port: 5432,
+            user: "postgres".to_string(),
+            password: "secret".to_string(),
+            dbname: "messages_db".to_string(),
+            pool_size: 5,
+        };
+
+        assert_eq!(
+            db.connection_string(),
+            "postgres://postgres:secret@localhost:5432/messages_db"
+        );
+    }
+
+    #[tokio::test]
+    async fn healthz_returns_ok() {
+        let req = HttpRequest::builder()
+            .method(Method::GET)
+            .uri("/healthz")
+            .body(Body::empty())
+            .unwrap();
+        let resp = handle_http(req, Registry::new()).await.unwrap();
+        assert_eq!(resp.status(), 200);
+        let bytes = to_bytes(resp.into_body()).await.unwrap();
+        assert_eq!(&bytes[..], b"ok");
+    }
+
+    #[tokio::test]
+    async fn dashboard_returns_html() {
+        let req = HttpRequest::builder()
+            .method(Method::GET)
+            .uri("/dashboard")
+            .body(Body::empty())
+            .unwrap();
+        let resp = handle_http(req, Registry::new()).await.unwrap();
+        assert_eq!(resp.status(), 200);
+        let bytes = to_bytes(resp.into_body()).await.unwrap();
+        let body = String::from_utf8(bytes.to_vec()).unwrap();
+        assert!(body.contains("API Dashboard"));
+    }
+
+    #[tokio::test]
+    async fn unknown_path_returns_404() {
+        let req = HttpRequest::builder()
+            .method(Method::GET)
+            .uri("/nope")
+            .body(Body::empty())
+            .unwrap();
+        let resp = handle_http(req, Registry::new()).await.unwrap();
+        assert_eq!(resp.status(), 404);
+    }
+}
