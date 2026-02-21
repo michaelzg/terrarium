@@ -1,4 +1,4 @@
-pub use deadpool_postgres::{Pool, Config, ManagerConfig, RecyclingMethod, Runtime};
+pub use deadpool_postgres::{Config, ManagerConfig, Pool, RecyclingMethod, Runtime};
 use serde::Deserialize;
 use tokio_postgres::NoTls;
 
@@ -12,9 +12,7 @@ pub struct DatabaseSettings {
     pub pool_size: usize,
 }
 
-pub async fn create_pool(
-    settings: &DatabaseSettings,
-) -> Result<Pool, Box<dyn std::error::Error>> {
+pub async fn create_pool(settings: &DatabaseSettings) -> Result<Pool, Box<dyn std::error::Error>> {
     log::info!(
         "Creating database pool with host={}, port={}, dbname={}, user={}",
         settings.host,
@@ -79,9 +77,6 @@ pub async fn insert_message(
 
     // Commit the transaction. (If an error occurs here, the transaction will roll back automatically.)
     tx.commit().await?;
-    log::debug!(
-        "Successfully inserted {} row(s) into messages table",
-        rows
-    );
+    log::debug!("Successfully inserted {} row(s) into messages table", rows);
     Ok(())
 }
