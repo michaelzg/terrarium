@@ -238,3 +238,52 @@ async fn handle_http(
             .unwrap()),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use hyper::{body::to_bytes, Method};
+
+    fn running_flag() -> Arc<AtomicBool> {
+        Arc::new(AtomicBool::new(true))
+    }
+
+    #[tokio::test]
+    async fn healthz_returns_ok() {
+        let req = HttpRequest::builder()
+            .method(Method::GET)
+            .uri("/healthz")
+            .body(Body::empty())
+            .unwrap();
+
+        let resp = handle_http(req, Registry::new(), running_flag()).await.unwrap();
+        assert_eq!(resp.status(), 200);
+        let bytes = to_bytes(resp.into_body()).await.unwrap();
+        assert_eq!(&bytes[..], b"ok");
+    }
+
+    #[tokio::test]
+    async fn metrics_endpoint_returns_prometheus_text() {
+        let req = HttpRequest::builder()
+            .method(Method::GET)
+            .uri("/metrics")
+            .body(Body::empty())
+            .unwrap();
+
+        let resp = handle_http(req, Registry::new(), running_flag()).await.unwrap();
+        assert_eq!(resp.status(), 200);
+        assert!(resp.headers().get("Content-Type").is_some());
+    }
+
+    #[tokio::test]
+    async fn unknown_path_returns_404() {
+        let req = HttpRequest::builder()
+            .method(Method::GET)
+            .uri("/unknown")
+            .body(Body::empty())
+            .unwrap();
+
+        let resp = handle_http(req, Registry::new(), running_flag()).await.unwrap();
+        assert_eq!(resp.status(), 404);
+    }
+}
